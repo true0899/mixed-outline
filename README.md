@@ -169,6 +169,7 @@ Use Node.js 18+ for the tests. Copy the three plugin files into a development va
 Implementation notes:
 
 - Reading view must switch to `source` view state before placing an editable caret. This state covers both Source mode and Live Preview.
+- Reading view has no visible editing caret, so outline navigation scrolls the rendered preview with `previewMode.applyScroll(line)`, falling back to the rendered `[data-line]` nodes. Editor cursor APIs silently do nothing there.
 - Use `editor.replaceRange()` at the final position to preserve selected text and normal undo history. Do not rewrite the whole note or simulate Enter, which can continue a list.
 - Recheck the target file after asynchronous view changes, and ignore overlapping invocations.
 - Clicking the sidebar can change the active pane. Resolve the current Markdown view using the existing active/recent-note tracking.

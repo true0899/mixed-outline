@@ -426,10 +426,16 @@ class MixedOutlinePlugin extends Plugin {
       return;
     }
 
-    const pos = { line: node.line, ch: node.ch ?? 0 };
-    view.editor.setCursor(pos);
-    view.editor.scrollIntoView({ from: pos, to: pos }, true);
-    view.editor.focus();
+    if (view.getMode() === "preview") {
+      // The CodeMirror editor is hidden in Reading view, so cursor APIs move
+      // nothing visible there. Scroll the rendered preview instead.
+      scrollPreviewToLine(view, node.line);
+    } else {
+      const pos = { line: node.line, ch: node.ch ?? 0 };
+      view.editor.setCursor(pos);
+      view.editor.scrollIntoView({ from: pos, to: pos }, true);
+      view.editor.focus();
+    }
 
     this.currentFile = file;
     this.pendingEditorText = view.editor.getValue();
@@ -1283,6 +1289,50 @@ function getMarkdownScrollElement(view) {
     candidates[0] ??
     null
   );
+}
+
+function scrollPreviewToLine(view, line) {
+  const previewMode = view.previewMode ?? view.currentMode;
+  if (typeof previewMode?.applyScroll === "function") {
+    try {
+      previewMode.applyScroll(line);
+      return;
+    } catch (error) {
+      console.error("Mixed Outline: could not scroll Reading view", error);
+    }
+  }
+
+  scrollPreviewElementToLine(view, line);
+}
+
+function scrollPreviewElementToLine(view, line) {
+  const scrollEl = getMarkdownScrollElement(view);
+  const target = findPreviewElementForLine(view.contentEl, line);
+  if (!scrollEl || !target) {
+    return;
+  }
+
+  const scrollRect = scrollEl.getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
+  scrollEl.scrollTop += targetRect.top - scrollRect.top - 8;
+}
+
+function findPreviewElementForLine(container, line) {
+  const markers = [...container.querySelectorAll("[data-line]")];
+  let best = null;
+  let bestLine = Number.NEGATIVE_INFINITY;
+
+  for (const marker of markers) {
+    const value = Number.parseInt(marker.getAttribute("data-line"), 10);
+    // Prefer the last marker at or before the target line; ties keep the
+    // innermost (last in document order) match.
+    if (Number.isFinite(value) && value <= line && value >= bestLine) {
+      best = marker;
+      bestLine = value;
+    }
+  }
+
+  return best ?? markers[0] ?? null;
 }
 
 function cssEscape(value) {
