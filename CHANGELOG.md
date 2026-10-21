@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.1 — 2026-10-21
+
+### Fixed
+
+- Clicking an outline entry in Reading view now scrolls the rendered note to the matching line. Reading view has no editing caret, so the previous editor-based navigation had no visible effect.
+
+### 中文说明
+
+修复阅读模式下点击大纲没有反应的问题，现在会滚动到对应内容。
+
 ## 1.2.0 — 2026-10-10
 
 ### Added
